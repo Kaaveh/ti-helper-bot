@@ -55,21 +55,11 @@ async def assess_user(user: User) -> dict:
 
     approved = score < 0.5
 
-    result = {
+    return {
         "approved": approved,
         "score": score,
         "reason": "; ".join(reasons) if reasons else "passed checks",
     }
-
-    if approved:
-        result["welcome_message"] = (
-            f"Welcome to Tech Immigrants, {user.first_name}! 🎉\n\n"
-            "We're a community of tech professionals who've immigrated or are "
-            "planning to. Feel free to introduce yourself and ask questions.\n\n"
-            "Please review the pinned rules to keep our space helpful for everyone."
-        )
-
-    return result
 
 
 async def assess_message(text: str, user: User) -> dict:
