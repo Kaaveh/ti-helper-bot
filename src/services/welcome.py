@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 _TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 _SUPPORTED_LANGS = {"en", "fa"}
 _DEFAULT_LANG = "en"
+_FALLBACK_NAMES = {"en": "there", "fa": "دوست عزیز"}
 
 
 def _detect_language(user: "User") -> str:
@@ -23,4 +24,5 @@ def render_welcome(user: "User") -> str:
     if not path.exists():
         path = _TEMPLATES_DIR / f"welcome_{_DEFAULT_LANG}.txt"
     template = path.read_text(encoding="utf-8")
-    return template.format(first_name=user.first_name or "")
+    name = (user.first_name or "").strip() or _FALLBACK_NAMES.get(lang, _FALLBACK_NAMES[_DEFAULT_LANG])
+    return template.format(first_name=name)
