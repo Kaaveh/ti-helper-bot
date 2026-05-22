@@ -23,6 +23,10 @@ class RenderWelcomeTests(unittest.TestCase):
         msg = render_welcome(_user("en-US", first_name="Sara"))
         self.assertIn("Welcome to Tech Immigrants, Sara", msg)
 
+    def test_underscore_separator_in_language_code(self):
+        msg = render_welcome(_user("en_US", first_name="Sara"))
+        self.assertIn("Welcome to Tech Immigrants, Sara", msg)
+
     def test_missing_language_code_falls_back_to_en(self):
         msg = render_welcome(_user(None, first_name="X"))
         self.assertIn("Welcome to Tech Immigrants, X", msg)

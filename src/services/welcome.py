@@ -1,3 +1,4 @@
+from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -11,18 +12,23 @@ _FALLBACK_NAMES = {"en": "there", "fa": "دوست عزیز"}
 
 
 def _detect_language(user: "User") -> str:
-    code = (user.language_code or "").lower()
+    code = (user.language_code or "").lower().replace("_", "-")
     primary = code.split("-")[0]
     if primary in _SUPPORTED_LANGS:
         return primary
     return _DEFAULT_LANG
 
 
-def render_welcome(user: "User") -> str:
-    lang = _detect_language(user)
+@lru_cache(maxsize=None)
+def _load_template(lang: str) -> str:
     path = _TEMPLATES_DIR / f"welcome_{lang}.txt"
     if not path.exists():
         path = _TEMPLATES_DIR / f"welcome_{_DEFAULT_LANG}.txt"
-    template = path.read_text(encoding="utf-8")
+    return path.read_text(encoding="utf-8")
+
+
+def render_welcome(user: "User") -> str:
+    lang = _detect_language(user)
+    template = _load_template(lang)
     name = (user.first_name or "").strip() or _FALLBACK_NAMES.get(lang, _FALLBACK_NAMES[_DEFAULT_LANG])
     return template.format(first_name=name)
