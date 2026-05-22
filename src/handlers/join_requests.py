@@ -22,8 +22,10 @@ async def handle_join_request(update: Update, context: ContextTypes.DEFAULT_TYPE
                 chat_id=user.id,
                 text=render_welcome(user),
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                f"Failed to DM welcome to user {user.id} (@{user.username}): {exc}"
+            )
     else:
         await request.decline()
         logger.info(
