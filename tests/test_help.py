@@ -1,43 +1,72 @@
 import sys
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from handlers.admin_commands import ADMIN_HELP, MEMBER_HELP, _select_help  # noqa: E402
+from handlers.admin_commands import _is_admin  # noqa: E402
+from services.help import render_help  # noqa: E402
 
 
-class MemberHelpTests(unittest.TestCase):
-    def test_member_help_has_intro_and_rules_pointer(self):
-        self.assertIn("Tech Immigrants Helper Bot", MEMBER_HELP)
-        self.assertIn("pinned rules", MEMBER_HELP)
-
-    def test_member_help_lists_public_commands(self):
-        self.assertIn("/start", MEMBER_HELP)
-        self.assertIn("/help", MEMBER_HELP)
-
-    def test_member_help_omits_admin_commands(self):
-        self.assertNotIn("/stats", MEMBER_HELP)
-        self.assertNotIn("/approve_all", MEMBER_HELP)
+def _user(language_code):
+    return SimpleNamespace(language_code=language_code, first_name="Ali")
 
 
-class AdminHelpTests(unittest.TestCase):
-    def test_admin_help_lists_every_command(self):
+class RenderHelpTests(unittest.TestCase):
+    def test_member_english(self):
+        msg = render_help(_user("en"), is_admin=False)
+        self.assertIn("Tech Immigrants Helper Bot", msg)
+        self.assertIn("pinned rules", msg)
+        self.assertIn("/start", msg)
+        self.assertIn("/help", msg)
+        self.assertNotIn("/stats", msg)
+        self.assertNotIn("/approve_all", msg)
+
+    def test_member_farsi(self):
+        msg = render_help(_user("fa"), is_admin=False)
+        self.assertIn("Tech Immigrants", msg)
+        self.assertIn("قوانین پین‌شده", msg)
+        self.assertIn("/start", msg)
+        self.assertIn("/help", msg)
+        self.assertNotIn("/stats", msg)
+        self.assertNotIn("/approve_all", msg)
+        self.assertNotIn("Welcome", msg)
+
+    def test_admin_english(self):
+        msg = render_help(_user("en-US"), is_admin=True)
         for command in ("/start", "/help", "/stats", "/approve_all"):
-            self.assertIn(command, ADMIN_HELP)
+            self.assertIn(command, msg)
+        self.assertIn("Admin commands", msg)
+
+    def test_admin_farsi(self):
+        msg = render_help(_user("fa"), is_admin=True)
+        for command in ("/start", "/help", "/stats", "/approve_all"):
+            self.assertIn(command, msg)
+        self.assertIn("دستورات ادمین", msg)
+        self.assertNotIn("Admin commands", msg)
+
+    def test_unsupported_language_falls_back_to_en(self):
+        msg = render_help(_user("de"), is_admin=False)
+        self.assertIn("Tech Immigrants Helper Bot", msg)
+        self.assertIn("pinned rules", msg)
+
+    def test_missing_language_code_falls_back_to_en(self):
+        msg = render_help(_user(None), is_admin=True)
+        self.assertIn("Admin commands", msg)
 
 
-class SelectHelpTests(unittest.TestCase):
-    def test_group_admin_gets_admin_help(self):
-        self.assertIs(_select_help("supergroup", "administrator"), ADMIN_HELP)
-        self.assertIs(_select_help("group", "creator"), ADMIN_HELP)
+class IsAdminTests(unittest.TestCase):
+    def test_group_admin_is_admin(self):
+        self.assertTrue(_is_admin("supergroup", "administrator"))
+        self.assertTrue(_is_admin("group", "creator"))
 
-    def test_group_member_gets_member_help(self):
-        self.assertIs(_select_help("supergroup", "member"), MEMBER_HELP)
+    def test_group_member_is_not_admin(self):
+        self.assertFalse(_is_admin("supergroup", "member"))
 
-    def test_private_chat_never_returns_admin_help(self):
-        self.assertIs(_select_help("private", "creator"), MEMBER_HELP)
-        self.assertIs(_select_help("private", "administrator"), MEMBER_HELP)
+    def test_private_chat_is_never_admin(self):
+        self.assertFalse(_is_admin("private", "creator"))
+        self.assertFalse(_is_admin("private", "administrator"))
 
 
 if __name__ == "__main__":

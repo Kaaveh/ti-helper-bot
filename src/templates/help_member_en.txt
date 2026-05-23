@@ -1,0 +1,9 @@
+👋 Hi! I'm the Tech Immigrants Helper Bot.
+
+I handle join approvals, moderate spam, and keep the community healthy.
+
+Available commands:
+/start — Show the bot intro
+/help — Show this help message
+
+Please review the pinned rules to keep our space helpful for everyone.
